@@ -4,7 +4,7 @@
 
 // 搜索深度
 
-int deep = 2;
+int deep = 4;
 /**
  * AI下子
  */
@@ -49,7 +49,10 @@ void input(int **board, int *x, int *y, int t) {
 	} else if (t == 2) {
 	    printf("请输入白棋的位置：\n");
 	}
-	scanf("%d %d", x, y);
+	while(scanf("%d %d", x, y) == 0) {
+	    printf("请输入两个数字\n");
+	    while(getchar() != '\n');
+	}
 	if (*x < 0 || *x > (SIZE - 1) || *y < 0 || *y > (SIZE - 1) || board[*x][*y] != 0) {
 	    printf("无效的位置，请重新输入\n");
 	} else {

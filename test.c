@@ -160,7 +160,14 @@ static void testPut(int **board, int **blackScore, int **whiteScore) {
     }
 
     printf("\n\n");
+}
 
+static void testMwin(int **board) {
+    board[8][8] = WHITE;
+    board[9][8] = WHITE;
+    board[10][8] = WHITE;
+    board[11][8] = WHITE;
+    EXPECT_EQ_INT(WHITE, mwin(board));
 }
 
 void testGobang() {
@@ -174,6 +181,8 @@ void testGobang() {
 
     testGen(board);
     testEvaluate_Point(board);
+
+    testMwin(board);
 }
 
 

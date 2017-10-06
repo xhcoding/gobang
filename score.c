@@ -7,18 +7,17 @@ int evaluate(int **board, int t, int **blackScore, int **whiteScore) {
 
     // 遍历出最高分
     for (int i = 0; i < SIZE; i++) {
-	for (int j = 0; j < SIZE; j ++) {
-	    if (board[i][j] == EMPTY) {
-		blackMaxScore = blackScore[i][j] > blackMaxScore ?
-		    blackScore[i][j] : blackMaxScore;
-		whiteMaxScore = whiteScore[i][j] > whiteMaxScore ?
-		    whiteScore[i][j] : whiteMaxScore;
-	    }
-	}
+    	for (int j = 0; j < SIZE; j ++) {
+    	    if (board[i][j] == EMPTY) {
+    		blackMaxScore = blackScore[i][j] > blackMaxScore ?
+    		    blackScore[i][j] : blackMaxScore;
+    		whiteMaxScore = whiteScore[i][j] > whiteMaxScore ?
+    		    whiteScore[i][j] : whiteMaxScore;
+    	    }
+    	}
     }
-
+    
     int result = (t == BLACK ? 1 : -1) * (blackMaxScore - whiteMaxScore);
-
     return result;
 }
 

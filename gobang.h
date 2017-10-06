@@ -55,8 +55,8 @@ int gen(int **board, int deep, int *points);
  * 极大极小搜索
  */
 int maxmin(int **board, int deep, int *x, int *y, int **blackScore, int **whiteScore);
-int min(int **board, int deep, int *x, int *y, int t, int **blackScore, int **whiteScore);
-int max(int **board, int deep, int *x, int *y, int t, int **blackScore, int **whiteScore);
+int min(int **board, int deep, int t, int alpha, int beta, int **blackScore, int **whiteScore);
+int max(int **board, int deep, int t, int lapha, int beta, int **blackScore, int **whiteScore);
 
 
 

@@ -59,12 +59,13 @@ int maxmin(int **board, int deep, int *x, int *y, int **blackScore, int **whiteS
     int best = MIN;
     int points[SIZE * SIZE * 2];
     int count = gen(board, deep, points);
-
+    int alpha = -MAX;
+    int beta = -best;
+    
     for (int i = 0; i < count; i++) {
-	//board[points[i * 2]][points[i * 2 + ]] = BLACK;// 尝试一个棋子
-	put(board, points[i * 2], points[i * 2 + 1], BLACK, blackScore, whiteScore);
-	int v = min(board, deep - 1, x, y, WHITE, blackScore, whiteScore); // 找到下一层的最小值
-	if (v >= best) {
+	put(board, points[i * 2], points[i * 2 + 1], BLACK, blackScore, whiteScore);//MAX，选取一个方案
+	int v = min(board, deep - 1, BLACK, alpha, beta, blackScore, whiteScore); // 找出min层的最小值
+	if (v > best) {
 	    best = v;
 	    *x = points[i * 2];
 	    *y = points[i * 2 + 1];
@@ -76,10 +77,8 @@ int maxmin(int **board, int deep, int *x, int *y, int **blackScore, int **whiteS
 }
 
 
-int min(int **board, int deep, int *x, int *y, int t, int **blackScore, int **whiteScore) {
+int min(int **board, int deep, int t, int alpha, int beta, int **blackScore, int **whiteScore) {
     int v = evaluate(board, t, blackScore, whiteScore);
-    //printf("min p = %d deep = %d v = %d\n", p, deep, v);
-    p++;
     if (deep <= 0 || mwin(board)) {
 	return v;
     }
@@ -88,15 +87,16 @@ int min(int **board, int deep, int *x, int *y, int t, int **blackScore, int **wh
     int count = gen(board, deep, points);
     
     for (int i = 0; i < count; i++) {
-	//board[points[i * 2]][points[i * 2 + 1]] = WHITE;// 尝试一个棋子
 	put(board, points[i * 2], points[i * 2 + 1], WHITE, blackScore, whiteScore);
-	int v = max(board, deep - 1, x, y, BLACK, blackScore, whiteScore);
+	int v = max(board, deep - 1, WHITE, best < alpha ? best : alpha, beta, blackScore, whiteScore); // 找出max层的最大值
 	delete(board, points[i * 2], points[i * 2 + 1], EMPTY, blackScore, whiteScore);
 	if (v < best) {
 	    best = v;
-	    *x = points[i * 2];
-	    *y = points[i * 2 + 1];
 
+	}
+	if (v < beta) {
+	    // beta剪枝
+	    break;
 	}
     }
 #ifdef PRINT_BEST
@@ -107,9 +107,8 @@ int min(int **board, int deep, int *x, int *y, int t, int **blackScore, int **wh
 
 
 
-int max(int **board, int deep, int *x, int *y, int t, int **blackScore, int **whiteScore) {
+int max(int **board, int deep, int t, int alpha, int beta, int **blackScore, int **whiteScore) {
     int v = evaluate(board, t, blackScore, whiteScore);
-    //printf("max p = %d deep = %d v = %d\n", p, deep, v);
     p++;
     if (deep <= 0 || mwin(board)) {
 	return v;
@@ -119,16 +118,16 @@ int max(int **board, int deep, int *x, int *y, int t, int **blackScore, int **wh
     int count = gen(board, deep, points);
     
     for (int i = 0; i < count; i++) {
-	//	board[points[i * 2]][points[i * 2 + 1]] = BLACK;// 尝试一个棋子 /* FIXME:  */
 
 	put(board, points[i * 2], points[i * 2 + 1], BLACK, blackScore, whiteScore);
-	int v = min(board, deep - 1, x, y, WHITE, blackScore, whiteScore);
+	int v = min(board, deep - 1, BLACK, alpha, best > beta ? best : beta, blackScore, whiteScore);
 	delete(board, points[i * 2], points[i * 2 + 1], EMPTY, blackScore, whiteScore);
 	if (v > best) {
 	    best = v;
-	    *x = points[i * 2];
-	    *y = points[i * 2 + 1];
-
+	}
+	if (v > alpha) {
+	    // alpha剪枝
+	    break;
 	}
     }
 #ifdef PRINT_BEST
