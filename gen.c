@@ -1,12 +1,12 @@
 #include "gobang.h"
-
+#include "list/list.h"
 static int p = 0;
 
-int hasNeighbors(int **board, int x, int y, int distance, int count) {
-    int startX = x - distance;
-    int endX = x + distance;
-    int startY = y - distance;
-    int endY = y + distance;
+int hasNeighbors(Board *board, Point p, int distance, int count) {
+    int startX = p.x - distance;
+    int endX = p.x + distance;
+    int startY = p.y - distance;
+    int endY = p.y + distance;
 
     for (int i = startX; i <= endX; i++) {
 	if (i < 0 || i > SIZE - 1) {
@@ -16,10 +16,10 @@ int hasNeighbors(int **board, int x, int y, int distance, int count) {
 	    if (j < 0 || j > SIZE - 1) {
 		continue;
 	    }
-	    if (i == x && j == y)  {
+	    if (i == p.x && j == p.y)  {
 		continue;
 	    }
-	    if (board[i][j] != EMPTY) {
+	    if (board->board[i][j] != EMPTY) {
 		count--;
 		if (count <= 0) {
 		    return 1;
@@ -31,65 +31,145 @@ int hasNeighbors(int **board, int x, int y, int distance, int count) {
 }
 
 
-int gen(int **board, int deep, int *points) {
-    int c1 = 0, c2 = 0;
-    int neighbor[SIZE * SIZE * 2];
-    int nextNeighbor[SIZE * SIZE * 2];
+Points *gen(Board *board, int deep) {
+
+    Points *fives = get_empty_list();
+
+    Points *fours = get_empty_list();
+
+    Points *twothrees = get_empty_list();
+
+    Points *threes = get_empty_list();
+
+    Points *twos = get_empty_list();
+
+    Points *neighbor = get_empty_list();
+
+    Points *nextNeighbor = get_empty_list();
+    
     for (int i = 0;i < SIZE; i++) {
 	for (int j = 0;j < SIZE; j++) {
-	    if (board[i][j] == EMPTY) {
-		if (hasNeighbors(board, i, j, 1, 1)) {
-		    c1++;
-		    neighbor[c1 * 2 - 2] = i;
-		    neighbor[c1 * 2 - 1] = j;
-		} else if (deep >= 2 && hasNeighbors(board, i, j, 2, 2)) {
-		    c2++;
-		    nextNeighbor[c2 * 2 - 2] = i;
-		    nextNeighbor[c2 * 2 - 1] = j;
+	    Point p = init_point(i, j);
+	    if (board->board[i][j] == EMPTY) {
+		if (hasNeighbors(board, p, 1, 1)) {
+		    int scoreBlack = evaluate_point(board, p, BLACK);
+		    int scoreWhite = evaluate_point(board, p, WHITE);
+
+		    if (scoreBlack >= FIVE) {
+			// 电脑成5
+			Points *t = get_empty_list();
+			push_back_list(t, p);
+			return t;
+		    } else if (scoreWhite >= FIVE) {
+			// 玩家能不能连成5，遍历还没完成，说不定电脑能成5
+			push_back_list(fives, p);
+		    } else if (scoreBlack >= FOUR) {
+			push_front_list(fours, p);
+		    } else if (scoreWhite >= FOUR) {
+			push_back_list(fours, p);
+		    } else if (scoreBlack >= 2 * THREE) {
+			push_front_list(twothrees, p);
+		    } else if (scoreWhite >= 2 * THREE) {
+			push_back_list(twothrees, p);
+		    } else if (scoreBlack >= THREE) {
+			push_front_list(threes, p);
+		    } else if (scoreWhite >= THREE) {
+			push_back_list(threes, p);
+		    } else if (scoreBlack >= TWO) {
+			push_front_list(twos, p);
+		    } else if (scoreWhite >= TWO) {
+			push_back_list(twos, p);
+		    } else {	    
+			push_back_list(neighbor, p);
+		    }
+		} else if (deep >= 2 && hasNeighbors(board, p, 2, 2)) {
+		    push_back_list(nextNeighbor, p);
 		}
 	    }
-	} 
+	}
     }
-    memcpy(points, neighbor, sizeof(int) * c1 * 2);
-    memcpy(points + c1 * 2, nextNeighbor, sizeof(int) * c2 * 2);
-    return c1 + c2;
+
+    // 如果成5，直接返回
+    if (fives->length != 0) {
+	destroy_list(fours);
+	destroy_list(twothrees);
+	destroy_list(threes);
+	destroy_list(twos);
+	destroy_list(neighbor);
+	destroy_list(nextNeighbor);
+	return fives;
+    }
+    // 四
+    if (fours->length != 0) {
+	destroy_list(fives);
+	destroy_list(twothrees);
+	destroy_list(threes);
+	destroy_list(twos);
+	destroy_list(neighbor);
+	destroy_list(nextNeighbor);
+
+	return fours;
+    }
+
+    // 双三
+    if (twothrees->length != 0) {
+	destroy_list(fives);
+	destroy_list(fours);
+	destroy_list(threes);
+	destroy_list(twos);
+	destroy_list(neighbor);
+	destroy_list(nextNeighbor);
+	return twothrees;
+    }
+
+    append_back_list(threes, twos);
+    append_back_list(threes, neighbor);
+    append_back_list(threes, nextNeighbor);
+
+    destroy_list(fives);
+    destroy_list(fours);
+    destroy_list(twothrees);
+    destroy_list(twos);
+    destroy_list(neighbor);
+    destroy_list(nextNeighbor);
+
+    return threes;
 }
 
-int maxmin(int **board, int deep, int *x, int *y, int **blackScore, int **whiteScore) {
+int maxmin(Board *board, int deep, Point *pp) {
     int best = MIN;
-    int points[SIZE * SIZE * 2];
-    int count = gen(board, deep, points);
-    int alpha = -MAX;
-    int beta = -best;
-    
-    for (int i = 0; i < count; i++) {
-	put(board, points[i * 2], points[i * 2 + 1], BLACK, blackScore, whiteScore);//MAX，选取一个方案
-	int v = min(board, deep - 1, BLACK, alpha, beta, blackScore, whiteScore); // 找出min层的最小值
+    List *points = gen(board, deep);
+
+    for (int i = 0; i < points->length; i++) {
+	Point tp = find_index_list(points, i);
+	put(board, tp, BLACK);//MAX，选取一个方案
+	int v = min(board, deep - 1, BLACK, MAX,  -MAX); // 找出min层的最小值
 	if (v > best) {
 	    best = v;
-	    *x = points[i * 2];
-	    *y = points[i * 2 + 1];
+	    pp->x = tp.x;
+	    pp->y = tp.y;
 	}
 
-	delete(board, points[i * 2], points[i * 2 + 1], EMPTY, blackScore, whiteScore);
+	getoff(board, tp, EMPTY);
     }
+    destroy_list(points);
     return best;
 }
 
 
-int min(int **board, int deep, int t, int alpha, int beta, int **blackScore, int **whiteScore) {
-    int v = evaluate(board, t, blackScore, whiteScore);
+int min(Board *board, int deep, int role, int alpha, int beta) {
+    int v = evaluate(board, role);
     if (deep <= 0 || mwin(board)) {
 	return v;
     }
     int best = MAX;
-    int points[SIZE * SIZE * 2];
-    int count = gen(board, deep, points);
-    
-    for (int i = 0; i < count; i++) {
-	put(board, points[i * 2], points[i * 2 + 1], WHITE, blackScore, whiteScore);
-	int v = max(board, deep - 1, WHITE, best < alpha ? best : alpha, beta, blackScore, whiteScore); // 找出max层的最大值
-	delete(board, points[i * 2], points[i * 2 + 1], EMPTY, blackScore, whiteScore);
+    List *points = gen(board, deep);
+
+    for (int i = 0; i < points->length; i++) {
+	Point tp = find_index_list(points, i);
+	put(board, tp, WHITE);
+	int v = max(board, deep - 1, WHITE, best < alpha ? best : alpha, beta); // 找出max层的最大值
+	getoff(board, tp, EMPTY);
 	if (v < best) {
 	    best = v;
 
@@ -102,26 +182,26 @@ int min(int **board, int deep, int t, int alpha, int beta, int **blackScore, int
 #ifdef PRINT_BEST
     printf("min best = %d\n", best);
 #endif
+    destroy_list(points);
     return best;
 }
 
 
 
-int max(int **board, int deep, int t, int alpha, int beta, int **blackScore, int **whiteScore) {
-    int v = evaluate(board, t, blackScore, whiteScore);
+int max(Board *board, int deep, int role, int alpha, int beta) {
+    int v = evaluate(board, role);
     p++;
     if (deep <= 0 || mwin(board)) {
 	return v;
     }
     int best = MIN;
-    int points[SIZE * SIZE * 2];
-    int count = gen(board, deep, points);
-    
-    for (int i = 0; i < count; i++) {
+    List *points = gen(board, deep);
 
-	put(board, points[i * 2], points[i * 2 + 1], BLACK, blackScore, whiteScore);
-	int v = min(board, deep - 1, BLACK, alpha, best > beta ? best : beta, blackScore, whiteScore);
-	delete(board, points[i * 2], points[i * 2 + 1], EMPTY, blackScore, whiteScore);
+    for (int i = 0; i < points->length; i++) {
+	Point tp = find_index_list(points, i);
+	put(board, tp, BLACK);
+	int v = min(board, deep - 1, BLACK, alpha, best > beta ? best : beta);
+	getoff(board, tp, EMPTY);
 	if (v > best) {
 	    best = v;
 	}
@@ -133,6 +213,7 @@ int max(int **board, int deep, int t, int alpha, int beta, int **blackScore, int
 #ifdef PRINT_BEST
     printf("max best = %d\n", best);
 #endif
+    destroy_list(points);
     return best;
 }
 

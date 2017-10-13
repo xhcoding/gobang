@@ -1,34 +1,38 @@
 #include "gobang.h"
 
 
-int evaluate(int **board, int t, int **blackScore, int **whiteScore) {
+int evaluate(Board *board, int role) {
     int blackMaxScore = - FIVE;
     int whiteMaxScore = - FIVE;
 
     // 遍历出最高分
     for (int i = 0; i < SIZE; i++) {
     	for (int j = 0; j < SIZE; j ++) {
-    	    if (board[i][j] == EMPTY) {
-    		blackMaxScore = blackScore[i][j] > blackMaxScore ?
-    		    blackScore[i][j] : blackMaxScore;
-    		whiteMaxScore = whiteScore[i][j] > whiteMaxScore ?
-    		    whiteScore[i][j] : whiteMaxScore;
+    	    if (board->board[i][j] == EMPTY) {
+    		blackMaxScore = board->blackScore[i][j] > blackMaxScore ?
+    		    board->blackScore[i][j] : blackMaxScore;
+    		whiteMaxScore = board->whiteScore[i][j] > whiteMaxScore ?
+    		    board->whiteScore[i][j] : whiteMaxScore;
     	    }
     	}
     }
     
-    int result = (t == BLACK ? 1 : -1) * (blackMaxScore - whiteMaxScore);
+    int result = (role == BLACK ? 1 : -1) * (blackMaxScore - whiteMaxScore);
     return result;
 }
 
-int evaluate_point(int **board, int x, int y, int t) {
+int evaluate_point(Board *board, Point p, int role) {
+    int x = p.x;
+    int y = p.y;
+
     int result = 0;
     int count = 0, block = 0;
     int secondCount = 0; // 另一方向的count
-
+    
     int empty = -1;
     count = 1;
 
+    
     // 横向计算
     // 向右
     for (int i = y + 1; true; i++) {
@@ -36,18 +40,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x][i];
+	int tp = board->board[x][i];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		i + 1 < SIZE - 1 &&
-		board[x][i + 1] == t) { // DONE: i + 1 >= SIZE ?
+		board->board[x][i + 1] == role) { // DONE: i + 1 >= SIZE ?
 		empty = count;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    count++;
 	    continue;
 	} else {
@@ -62,18 +66,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x][i];
+	int tp = board->board[x][i];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		i - 1 > 0 &&
-		board[x][i - 1] == t) { // DONE: i - 1 < 0 ?
+		board->board[x][i - 1] == role) { // DONE: i - 1 < 0 ?
 		empty = 0;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    secondCount++;
 	    if (empty != -1) {
 		empty++;
@@ -99,18 +103,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[i][y];
+	int tp = board->board[i][y];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		i + 1 < SIZE - 1 &&
-		board[i+1][y] == t) {
+		board->board[i+1][y] == role) {
 		empty = count;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    count++;
 	    continue;
 	} else {
@@ -124,18 +128,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[i][y];
+	int tp = board->board[i][y];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		i - 1 > 0 &&
-		board[i - 1][y] == t) {
+		board->board[i - 1][y] == role) {
 		empty = 0;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    secondCount++;
 	    if (empty != -1) {
 		empty++;
@@ -164,18 +168,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x0][y0];
+	int tp = board->board[x0][y0];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		(x0 + 1 < SIZE - 1 && y0 + 1 < SIZE - 1) &&
-		board[x0 + 1][y0 + 1] == t) {
+		board->board[x0 + 1][y0 + 1] == role) {
 		empty = count;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    count++;
 	    continue;
 	} else {
@@ -191,18 +195,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x0][y0];
+	int tp = board->board[x0][y0];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		(x0 - 1 > 0 && y0 - 1 > 0) &&
-		board[x0 - 1][y0 - 1] == t) {
+		board->board[x0 - 1][y0 - 1] == role) {
 		empty = 0;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    secondCount++;
 	    if (empty != -1) {
 		empty++;
@@ -231,18 +235,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x0][y0];
+	int tp = board->board[x0][y0];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		(x0 + 1 < SIZE - 1 && y0 - 1 > 0) &&
-		board[x0 + 1][y0 - 1] == t) {
+		board->board[x0 + 1][y0 - 1] == role) {
 		empty = count;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    count++;
 	    continue;
 	} else {
@@ -259,18 +263,18 @@ int evaluate_point(int **board, int x, int y, int t) {
 	    block++;
 	    break;
 	}
-	int tp = board[x0][y0];
+	int tp = board->board[x0][y0];
 	if (tp == EMPTY) {
 	    if (empty == -1 &&
 		(x0 - 1 > 0 && y0 + 1 < SIZE - 1) &&
-		board[x0 - 1][y0 + 1] == t) {
+		board->board[x0 - 1][y0 + 1] == role) {
 		empty = 0;
 		continue;
 	    } else {
 		break;
 	    }
 	}
-	if (tp == t) {
+	if (tp == role) {
 	    secondCount++;
 	    if (empty != -1) {
 		empty++;
@@ -444,16 +448,18 @@ int type2score(int count, int block, int empty) {
 }
 
 
-void updateScore(int **board, int x, int y, int **blackScore, int **whiteScore) {
-    int black = evaluate_point(board, x, y, BLACK);
-    int white = evaluate_point(board, x, y, WHITE);
-    blackScore[x][y] = white;
-    whiteScore[x][y] = black;
+void updateScore(Board *board, Point p) {
+    int black = evaluate_point(board, p, BLACK);
+    int white = evaluate_point(board, p, WHITE);
+    board->blackScore[p.x][p.y] = white;
+    board->whiteScore[p.x][p.y] = black;
 }
 
 
 
-void updateScoreRadius(int **board, int x, int y, int **blackScore, int **whiteScore) {
+void updateScoreRadius(Board *board, Point p) {
+    int x = p.x;
+    int y = p.y;
     int radius = 8;
     // -
     for (int i = -radius; i < radius; i++) {
@@ -464,10 +470,10 @@ void updateScoreRadius(int **board, int x, int y, int **blackScore, int **whiteS
 	if (y0 >= SIZE) {
 	    break;
 	}
-	if (board[x0][y0] != EMPTY) {
+	if (board->board[x0][y0] != EMPTY) {
 	    continue;
 	}
-	updateScore(board, x0, y0, blackScore, whiteScore);
+	updateScore(board, init_point(x0, y0));
     }
     //|
     for (int i = -radius; i < radius; i++) {
@@ -478,10 +484,10 @@ void updateScoreRadius(int **board, int x, int y, int **blackScore, int **whiteS
 	if (x0 >= SIZE) {
 	    break;
 	}
-	if (board[x0][y0] != EMPTY) {
+	if (board->board[x0][y0] != EMPTY) {
 	    continue;
 	}
-	updateScore(board, x0, y0, whiteScore, blackScore);
+	updateScore(board, init_point(x0, y0));
     }
     //"\"
     for (int i = -radius; i < radius; i++) {
@@ -492,10 +498,10 @@ void updateScoreRadius(int **board, int x, int y, int **blackScore, int **whiteS
 	if (y0 >= SIZE || x0 >= SIZE) {
 	    break;
 	}
-	if (board[x0][y0] != EMPTY) {
+	if (board->board[x0][y0] != EMPTY) {
 	    continue;
 	}
-	updateScore(board, x0, y0, blackScore, whiteScore);
+	updateScore(board, init_point(x0, y0));
     }
     // "/"
     for (int i = -radius; i < radius; i++) {
@@ -506,10 +512,10 @@ void updateScoreRadius(int **board, int x, int y, int **blackScore, int **whiteS
 	if (y0 >= SIZE || x0 >= SIZE) {
 	    break;
 	}
-	if (board[x0][y0] != EMPTY) {
+	if (board->board[x0][y0] != EMPTY) {
 	    continue;
 	}
-	updateScore(board, x0, y0, blackScore, whiteScore);
+	updateScore(board, init_point(x0, y0));
     }
     
 }

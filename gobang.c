@@ -4,56 +4,54 @@
 
 // 搜索深度
 
-int deep = 4;
+int deep = 6;
 /**
  * AI下子
  */
-void blackPut(int **board, int **blackScore, int **whiteScore);
+void blackPut(Board *board);
 
-int blackScore[SIZE][SIZE]; // 黑棋的分值
-int whiteScore[SIZE][SIZE]; // 白棋的分值
 
-void input(int **board, int *x, int *y, int t);
+void input(Board *board, Point *point, int role);
 
 int main() {
 
     /* TODO:  free board*/
-    int **board, **blackScore, **whiteScore;
-
-    initBoard(&board, &blackScore, &whiteScore);
-    board[7][7] = BLACK;
+    Board b;
+    Board *board = &b;
+    initBoard(board);
+    board->board[7][7] = BLACK;
     draw(board);
-    int x, y;
-    int t = 1;
+    int role = BLACK;
     int s = 0;
+    Point p;
     for(;;) {
-	input(board, &x, &y, WHITE);
-	put(board, x, y, WHITE, blackScore, whiteScore);
-	if (win(board, x, y, WHITE)) {
+	input(board, &p, WHITE);
+	put(board, p, WHITE);
+	if (win(board, p, WHITE)) {
 	    printf("白棋胜利!\n");
 	    exit(0);
 	}
 	draw(board);
-	blackPut(board, blackScore, whiteScore);
+	blackPut(board);
 	draw(board);
-	
+
     }
     return 0;
 }
 
 
-void input(int **board, int *x, int *y, int t) {
+void input(Board *board, Point *point, int role) {
     for (;;) {
-	if (t == 1) {
+	if (role == BLACK) {
 	    printf("请输入黑棋的位置：\n");
-	} else if (t == 2) {
+	} else if (role == WHITE) {
 	    printf("请输入白棋的位置：\n");
 	}
-	while(scanf("%d %d", x, y) == 0) {
+	while(scanf("%d %d", &point->x, &point->y) == 0) {
 	    printf("请输入两个数字\n");
 	    while(getchar() != '\n');
 	}
-	if (*x < 0 || *x > (SIZE - 1) || *y < 0 || *y > (SIZE - 1) || board[*x][*y] != 0) {
+	if (point->x < 0 || point->x > (SIZE - 1) || point->y < 0 || point->y > (SIZE - 1) || board->board[point->x][point->y] != 0) {
 	    printf("无效的位置，请重新输入\n");
 	} else {
 	    break;
@@ -64,11 +62,11 @@ void input(int **board, int *x, int *y, int t) {
 
 
 
-void blackPut(int **board, int **blackScore, int **whiteScore) {
-    int x = 0, y = 0;
-    int best = maxmin(board, deep, &x, &y, blackScore, whiteScore);
-    put(board, x, y, BLACK, blackScore, whiteScore);
-    if (win(board, x, y, BLACK)) {
+void blackPut(Board *board) {
+    Point p;
+    int best = maxmin(board, deep, &p);
+    put(board, p, BLACK);
+    if (win(board, p, BLACK)) {
 	printf("黑棋胜利！\n");
 	exit(0);
     }

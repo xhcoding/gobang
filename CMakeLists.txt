@@ -7,6 +7,10 @@ add_definitions("-g")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-add_executable(gobang gobang.c board.c gen.c score.c)
+add_executable(gobang gobang.c board.c gen.c score.c list/list.c)
 
-add_executable(testGobang test.c board.c gen.c score.c)
+add_executable(testGobang test.c board.c gen.c score.c list/list.c)
+
+# list
+add_subdirectory(list)
+include_directories(list)
